@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#030303">
   <title>NO ONE IS HERE</title>
   <link rel="stylesheet" href="style.css">
@@ -15,7 +15,24 @@
     <div id="flash" class="flash"></div>
     <div id="distortion" class="distortion"></div>
     <div id="observer" class="observer hidden">I CAN SEE THAT YOU ARE STILL HERE.</div>
-    <section id="terminal" class="screen">
+
+    <section id="title-screen" class="menu-screen">
+      <div class="menu-frame">
+        <div class="menu-kicker">LOCAL TERMINAL // 01</div>
+        <h1>NO ONE IS HERE</h1>
+        <p class="menu-subtitle">A conversation you can leave at any time.</p>
+        <div class="menu-buttons">
+          <button id="start-button" class="menu-button">START GAME</button>
+          <button id="continue-button" class="menu-button">CONTINUE</button>
+          <button id="new-button" class="menu-button">NEW SESSION</button>
+          <button id="settings-button" class="menu-button">SETTINGS</button>
+          <button id="credits-button" class="menu-button">CREDITS</button>
+        </div>
+        <div id="menu-status" class="menu-status">SYSTEM READY</div>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen hidden">
       <header class="topbar">
         <div class="topline">CONNECTION // <span id="connection-state">UNKNOWN</span></div>
         <div class="status"><span id="chapter-label">CHAPTER 01</span><span id="session-id"></span></div>
@@ -23,9 +40,52 @@
       <div class="signal"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div id="story" class="story"></div>
       <div id="choices" class="choices"></div>
-      <div id="input-area" class="input-area"></div>
-      <footer class="footer"><span>[ local session ]</span><span id="memory-state">MEMORY: ACTIVE</span><span id="audio-state">AUDIO: READY</span></footer>
+      <footer class="footer">
+        <span>[ local session ]</span>
+        <span id="memory-state">MEMORY: EMPTY</span>
+        <span id="audio-state">AUDIO: READY</span>
+        <button id="menu-button" class="tiny-button" aria-label="Open game menu">☰</button>
+      </footer>
     </section>
+
+    <section id="pause-menu" class="overlay-menu hidden">
+      <div class="menu-panel">
+        <div class="menu-kicker">GAME MENU</div>
+        <button id="resume-button" class="menu-button">RESUME</button>
+        <button id="restart-button" class="menu-button">RESTART</button>
+        <button id="pause-settings-button" class="menu-button">SETTINGS</button>
+        <button id="exit-button" class="menu-button">EXIT TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="settings-menu" class="overlay-menu hidden">
+      <div class="menu-panel">
+        <div class="menu-kicker">SETTINGS</div>
+        <button id="audio-toggle" class="menu-button">AUDIO: ON</button>
+        <button id="effects-toggle" class="menu-button">EFFECTS: ON</button>
+        <button id="settings-back" class="menu-button">BACK</button>
+      </div>
+    </section>
+
+    <section id="credits-menu" class="overlay-menu hidden">
+      <div class="menu-panel credits">
+        <div class="menu-kicker">CREDITS</div>
+        <p>NO ONE IS HERE</p>
+        <p>Interactive psychological horror.</p>
+        <p>Everything you see here happens inside the session.</p>
+        <button id="credits-back" class="menu-button">BACK</button>
+      </div>
+    </section>
+
+    <section id="confirm-menu" class="overlay-menu hidden">
+      <div class="menu-panel">
+        <div class="menu-kicker">CONFIRM</div>
+        <p id="confirm-text">Leave this session?</p>
+        <button id="confirm-yes" class="menu-button">YES</button>
+        <button id="confirm-no" class="menu-button">NO</button>
+      </div>
+    </section>
+
     <div class="corner corner-a"></div><div class="corner corner-b"></div>
   </main>
   <script src="game.js"></script>
