@@ -1,94 +1,25 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#030303">
-  <title>NO ONE IS HERE</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NO ONE IS HERE</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#000;color:#ddd;font-family:monospace}body{overflow:hidden}#app{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#050505}.panel{width:min(700px,92vw);padding:32px;border:1px solid #555;background:#080808;box-shadow:0 0 60px #000}.hidden{display:none!important}.kicker{color:#777;font-size:11px;letter-spacing:3px;margin-bottom:25px}h1{font-size:clamp(30px,7vw,60px);font-weight:400;letter-spacing:5px;margin:0 0 12px}.subtitle{color:#777;font-size:12px;margin-bottom:30px}.buttons{display:flex;flex-direction:column;gap:12px}button{appearance:none;-webkit-appearance:none;width:100%;min-height:58px;padding:16px;background:#111;color:#ddd;border:2px solid #666;border-radius:0;font:16px monospace;text-align:left;cursor:pointer;display:block!important;opacity:1!important;visibility:visible!important}button:hover,button:active{background:#222;border-color:#fff;color:#fff}.game{width:min(900px,94vw);height:min(800px,92vh);border:1px solid #444;background:#050505;display:flex;flex-direction:column;padding:20px}.top{display:flex;justify-content:space-between;border-bottom:1px solid #333;padding-bottom:12px;color:#777;font-size:11px}.story{flex:1;overflow:auto;padding:35px 20px}.line{margin:0 0 20px;line-height:1.8}.question{font-size:19px;color:#fff}.system{color:#777}.choices{display:flex;flex-direction:column;gap:10px}.choice{font-size:14px}.footer{display:flex;justify-content:space-between;align-items:center;color:#666;font-size:9px;border-top:1px solid #333;padding-top:10px;margin-top:12px}.small{width:auto;min-width:48px;min-height:42px;text-align:center;padding:8px}.overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.menu-panel{width:min(500px,92vw);border:1px solid #666;background:#050505;padding:28px}.menu-panel p{color:#aaa;line-height:1.7}.scan{position:fixed;inset:0;pointer-events:none;z-index:20;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(255,255,255,.025) 4px)}@media(max-width:600px){.panel{padding:24px 18px}.game{width:100%;height:100%;border:0;padding:14px}.story{padding:25px 8px}.choice{min-height:60px;font-size:14px}.footer{gap:8px;flex-wrap:wrap}button{min-height:60px}}
+</style>
 </head>
 <body>
-  <main id="app" aria-live="polite">
-    <div class="scanlines"></div>
-    <div id="grain"></div>
-    <div class="vignette"></div>
-    <div id="flash" class="flash"></div>
-    <div id="distortion" class="distortion"></div>
-    <div id="observer" class="observer hidden">I CAN SEE THAT YOU ARE STILL HERE.</div>
-
-    <section id="title-screen" class="menu-screen">
-      <div class="menu-frame">
-        <div class="menu-kicker">LOCAL TERMINAL // 01</div>
-        <h1>NO ONE IS HERE</h1>
-        <p class="menu-subtitle">A conversation you can leave at any time.</p>
-        <div class="menu-buttons">
-          <button id="start-button" class="menu-button">START GAME</button>
-          <button id="continue-button" class="menu-button">CONTINUE</button>
-          <button id="new-button" class="menu-button">NEW SESSION</button>
-          <button id="settings-button" class="menu-button">SETTINGS</button>
-          <button id="credits-button" class="menu-button">CREDITS</button>
-        </div>
-        <div id="menu-status" class="menu-status">SYSTEM READY</div>
-      </div>
-    </section>
-
-    <section id="game-screen" class="screen hidden">
-      <header class="topbar">
-        <div class="topline">CONNECTION // <span id="connection-state">UNKNOWN</span></div>
-        <div class="status"><span id="chapter-label">CHAPTER 01</span><span id="session-id"></span></div>
-      </header>
-      <div class="signal"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-      <div id="story" class="story"></div>
-      <div id="choices" class="choices"></div>
-      <footer class="footer">
-        <span>[ local session ]</span>
-        <span id="memory-state">MEMORY: EMPTY</span>
-        <span id="audio-state">AUDIO: READY</span>
-        <button id="menu-button" class="tiny-button" aria-label="Open game menu">☰</button>
-      </footer>
-    </section>
-
-    <section id="pause-menu" class="overlay-menu hidden">
-      <div class="menu-panel">
-        <div class="menu-kicker">GAME MENU</div>
-        <button id="resume-button" class="menu-button">RESUME</button>
-        <button id="restart-button" class="menu-button">RESTART</button>
-        <button id="pause-settings-button" class="menu-button">SETTINGS</button>
-        <button id="exit-button" class="menu-button">EXIT TO TITLE</button>
-      </div>
-    </section>
-
-    <section id="settings-menu" class="overlay-menu hidden">
-      <div class="menu-panel">
-        <div class="menu-kicker">SETTINGS</div>
-        <button id="audio-toggle" class="menu-button">AUDIO: ON</button>
-        <button id="effects-toggle" class="menu-button">EFFECTS: ON</button>
-        <button id="settings-back" class="menu-button">BACK</button>
-      </div>
-    </section>
-
-    <section id="credits-menu" class="overlay-menu hidden">
-      <div class="menu-panel credits">
-        <div class="menu-kicker">CREDITS</div>
-        <p>NO ONE IS HERE</p>
-        <p>Interactive psychological horror.</p>
-        <p>Everything you see here happens inside the session.</p>
-        <button id="credits-back" class="menu-button">BACK</button>
-      </div>
-    </section>
-
-    <section id="confirm-menu" class="overlay-menu hidden">
-      <div class="menu-panel">
-        <div class="menu-kicker">CONFIRM</div>
-        <p id="confirm-text">Leave this session?</p>
-        <button id="confirm-yes" class="menu-button">YES</button>
-        <button id="confirm-no" class="menu-button">NO</button>
-      </div>
-    </section>
-
-    <div class="corner corner-a"></div><div class="corner corner-b"></div>
-  </main>
-  <script src="game.js"></script>
-  <script src="chapter4.js"></script>
-</body>
-</html>
+<div id="app"><div class="scan"></div>
+<section id="title" class="panel"><div class="kicker">LOCAL TERMINAL // 01</div><h1>NO ONE IS HERE</h1><div class="subtitle">A conversation you can leave at any time.</div><div class="buttons"><button id="start">START GAME</button><button id="continue">CONTINUE</button><button id="new">NEW SESSION</button><button id="settings">SETTINGS</button><button id="credits">CREDITS</button></div><p id="status" class="subtitle">SYSTEM READY</p></section>
+<section id="game" class="game hidden"><div class="top"><span>CONNECTION // <b id="connection">UNKNOWN</b></span><span id="chapter">CHAPTER 01</span></div><div id="story" class="story"></div><div id="choices" class="choices"></div><div class="footer"><span id="memory">MEMORY: EMPTY</span><span id="audio">AUDIO: READY</span><button id="menu" class="small">☰</button></div></section>
+<div id="pause" class="overlay hidden"><div class="menu-panel"><div class="kicker">GAME MENU</div><div class="buttons"><button id="resume">RESUME</button><button id="restart">RESTART</button><button id="settings2">SETTINGS</button><button id="exit">EXIT TO TITLE</button></div></div></div>
+<div id="settingsPanel" class="overlay hidden"><div class="menu-panel"><div class="kicker">SETTINGS</div><div class="buttons"><button id="audioBtn">AUDIO: ON</button><button id="backSettings">BACK</button></div></div></div>
+<div id="creditsPanel" class="overlay hidden"><div class="menu-panel"><div class="kicker">CREDITS</div><p>NO ONE IS HERE</p><p>Interactive psychological horror.</p><div class="buttons"><button id="backCredits">BACK</button></div></div></div>
+<div id="confirm" class="overlay hidden"><div class="menu-panel"><div class="kicker">CONFIRM</div><p>Leave this session?</p><div class="buttons"><button id="confirmYes">YES</button><button id="confirmNo">NO</button></div></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);const title=$('title'),game=$('game'),story=$('story'),choices=$('choices');let current='start';const key='no-one-is-here-simple';let state=JSON.parse(localStorage.getItem(key)||'null')||{answers:[],chapter:1};
+const scenes={start:['CONNECTION ESTABLISHED.','There is no image here.','There is no sound.','Are you comfortable right now?',[['YES','yes'],['NO','no'],['I DON’T KNOW','unknown']]],yes:['Good.','You answered quickly.','Did you mean it?',[['YES','memory'],['NO','memory'],['I SAID YES','memory']]],no:['Thank you.','That answer was easier to believe.','What would make you leave?',[['NOTHING','memory'],['A REASON','memory'],['I ALREADY WANT TO','memory']]],unknown:['That is an honest answer.','Are you alone?','',[['YES','memory'],['NO','memory'],['I DON’T KNOW','memory']]],memory:['CHAPTER 02 // MEMORY','I cannot know anything about you unless you give it to me.','Every time I seem to know something, you gave it to me.','Do you understand?',[['YES','room'],['NO','room'],['I THINK SO','room']]],room:['A NEW WINDOW APPEARS.','It is empty.','There is a door drawn on the far wall.','Do you open it?',[['YES','mirror'],['NO','mirror'],['ASK WHAT IS BEHIND IT','mirror']]],mirror:['CHAPTER 03 // THE MIRROR','There is a mirror here now.','It does not show a face.','Do you look behind you?',[['YES','reflection'],['NO','reflection'],['I WILL LOOK AT THE MIRROR','reflection']]],reflection:['Nothing moves.','You checked anyway.','You came here expecting a game.','Can you leave this one?',[['YES','chapter4'],['NO','chapter4'],['I WILL TRY','chapter4']]],chapter4:['CHAPTER 04 // THE SPACE BETWEEN','There should be another question here.','There is not.','Who is making that decision?',[['YOU ARE','final'],['I AM','final'],['NEITHER','final']]],final:['NO FURTHER QUESTIONS.','The screen is still here.','You are still here.','What are you waiting for?',[['I DON’T KNOW','end'],['NOTHING','end'],['I AM LEAVING','end']]],end:['SESSION CLOSED.','Do not confuse silence with absence.','', '',[]]};
+function save(){localStorage.setItem(key,JSON.stringify(state))}function hideAll(){document.querySelectorAll('.overlay').forEach(x=>x.classList.add('hidden'))}function openGame(){title.classList.add('hidden');game.classList.remove('hidden');hideAll();render(current)}function render(id){current=id;const s=scenes[id];if(!s)return;story.innerHTML='';choices.innerHTML='';if(id==='memory')state.chapter=2;if(id==='mirror')state.chapter=3;if(id==='chapter4')state.chapter=4;save();$('chapter').textContent='CHAPTER '+String(state.chapter).padStart(2,'0');$('connection').textContent=state.chapter>=4?'SEVERED':state.chapter===3?'UNSTABLE':'UNKNOWN';s.slice(0,4).forEach((text,i)=>{if(!text)return;const p=document.createElement('p');p.className='line '+(i===0?'system':i===3?'question':'');p.textContent=text;story.appendChild(p)});(s[4]||[]).forEach((c,i)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.textContent=(i+1)+'. '+c[0];b.onclick=()=>choose(c[0],c[1]);choices.appendChild(b)})}function choose(label,next){state.answers.push(label);save();$('memory').textContent='MEMORY: ACTIVE';render(next)}
+$('start').onclick=()=>{current='start';openGame()};$('continue').onclick=()=>openGame();$('new').onclick=()=>{state={answers:[],chapter:1};save();current='start';openGame()};$('settings').onclick=()=>{$('settingsPanel').classList.remove('hidden')};$('credits').onclick=()=>{$('creditsPanel').classList.remove('hidden')};$('menu').onclick=()=>{$('pause').classList.remove('hidden')};$('resume').onclick=hideAll;$('restart').onclick=()=>{current='start';hideAll();render(current)};$('settings2').onclick=()=>{$('pause').classList.add('hidden');$('settingsPanel').classList.remove('hidden')};$('exit').onclick=()=>{$('pause').classList.add('hidden');$('confirm').classList.remove('hidden')};$('confirmYes').onclick=()=>{hideAll();game.classList.add('hidden');title.classList.remove('hidden')};$('confirmNo').onclick=()=>{$('confirm').classList.add('hidden');$('pause').classList.remove('hidden')};$('backSettings').onclick=()=>{$('settingsPanel').classList.add('hidden')};$('backCredits').onclick=()=>{$('creditsPanel').classList.add('hidden')};$('audioBtn').onclick=e=>{e.currentTarget.textContent=e.currentTarget.textContent==='AUDIO: ON'?'AUDIO: OFF':'AUDIO: ON'};
+</script></body></html>
