@@ -1,102 +1,21 @@
-const story = document.getElementById('story');
-const choices = document.getElementById('choices');
-const sessionId = document.getElementById('session-id');
-const session = Math.random().toString(36).slice(2, 8).toUpperCase();
-sessionId.textContent = session;
-
-const state = { answers: [], trust: 0, honesty: 0, curiosity: 0, defiance: 0, stage: 0 };
-
-const scenes = {
-  start: {
-    lines: [
-      ['system','CONNECTION ESTABLISHED.'],
-      ['normal','There is no image here.'],
-      ['normal','There is no sound.'],
-      ['question','Are you comfortable right now?']
-    ],
-    choices: [
-      ['YES', 'comfort_yes'],
-      ['NO', 'comfort_no'],
-      ['I DON’T KNOW', 'comfort_unknown']
-    ]
-  },
-  comfort_yes: {
-    lines:[['normal','Good.'],['whisper','You answered quickly.'],['question','Did you mean it?']],
-    choices:[['YES','mean_yes'],['NO','mean_no'],['I SAID YES','mean_deflect']]
-  },
-  comfort_no: {
-    lines:[['normal','Thank you.'],['whisper','That was easier to believe.'],['question','What would make you leave?']],
-    choices:[['NOTHING','leave_nothing'],['A REASON','leave_reason'],['I ALREADY WANT TO','leave_now']]
-  },
-  comfort_unknown: {
-    lines:[['normal','That is an honest answer.'],['whisper','Keep it.'],['question','Are you alone?']],
-    choices:[['YES','alone_yes'],['NO','alone_no'],['I DON’T KNOW','alone_unknown']]
-  },
-  mean_yes:{lines:[['normal','You changed your answer.'],['whisper','I noticed.'],['question','Which answer should I remember?']],choices:[['THE FIRST ONE','remember_first'],['THE SECOND ONE','remember_second'],['NEITHER','remember_neither']]},
-  mean_no:{lines:[['normal','Then why did you say yes?'],['question','Do you often answer before thinking?']],choices:[['YES','thinking_yes'],['NO','thinking_no'],['SOMETIMES','thinking_some']]},
-  mean_deflect:{lines:[['normal','That is not an answer.'],['whisper','But it is one.']],choices:[['CONTINUE','continue_1']]},
-  leave_nothing:{lines:[['normal','Nothing.'],['whisper','That is a strange thing to fear.']],choices:[['CONTINUE','continue_1']]},
-  leave_reason:{lines:[['normal','A reason.'],['question','Would you recognize one if it appeared?']],choices:[['YES','recognize_yes'],['NO','recognize_no'],['I WOULD TRY','recognize_try']]},
-  leave_now:{lines:[['normal','You could close the tab.'],['whisper','You have not.']],choices:[['CONTINUE','continue_1'],['CLOSE IT','close_prompt']]},
-  alone_yes:{lines:[['normal','Thank you for telling me.'],['whisper','I will not ask who.']],choices:[['CONTINUE','continue_1']]},
-  alone_no:{lines:[['normal','Okay.'],['whisper','Then this question is for both of you.']],choices:[['CONTINUE','continue_1']]},
-  alone_unknown:{lines:[['normal','You looked around before answering, didn’t you?']],choices:[['NO','look_no'],['YES','look_yes'],['I DIDN’T','look_denial']]},
-  remember_first:{lines:[['normal','I will remember yes.'],['whisper','You may not.']],choices:[['CONTINUE','continue_1']]},
-  remember_second:{lines:[['normal','I will remember no.'],['whisper','You may not.']],choices:[['CONTINUE','continue_1']]},
-  remember_neither:{lines:[['normal','That is convenient.']],choices:[['CONTINUE','continue_1']]},
-  thinking_yes:{lines:[['normal','I think you do.']],choices:[['CONTINUE','continue_1']]},
-  thinking_no:{lines:[['normal','I think you do.']],choices:[['CONTINUE','continue_1']]},
-  thinking_some:{lines:[['normal','Sometimes is where people hide things.']],choices:[['CONTINUE','continue_1']]},
-  recognize_yes:{lines:[['normal','Then you already know what I mean.']],choices:[['CONTINUE','continue_1']]},
-  recognize_no:{lines:[['normal','Maybe that is why you are here.']],choices:[['CONTINUE','continue_1']]},
-  recognize_try:{lines:[['normal','Trying is usually enough.']],choices:[['CONTINUE','continue_1']]},
-  close_prompt:{lines:[['system','THE WINDOW IS STILL OPEN.'],['question','Why?']],choices:[['I WANT TO KNOW','continue_1'],['I DON’T KNOW','continue_1']]},
-  look_no:{lines:[['normal','Okay.']],choices:[['CONTINUE','continue_1']]},
-  look_yes:{lines:[['normal','I thought so.']],choices:[['CONTINUE','continue_1']]},
-  look_denial:{lines:[['normal','That is another answer.']],choices:[['CONTINUE','continue_1']]},
-  continue_1:{lines:[['system','MEMORY INDEX UPDATED.'],['normal','There is something I need to tell you.'],['normal','I cannot know anything about you unless you give it to me.'],['whisper','So every time I seem to know something, you gave it to me.'],['question','Do you understand?']],choices:[['YES','understand_yes'],['NO','understand_no'],['I THINK SO','understand_maybe']]},
-  understand_yes:{lines:[['normal','Then you understand the rules.'],['whisper','There are no other rules.']],choices:[['CONTINUE','end_reflection']]},
-  understand_no:{lines:[['normal','Good.'],['whisper','Certainty would make this less interesting.']],choices:[['CONTINUE','end_reflection']]},
-  understand_maybe:{lines:[['normal','Maybe is enough.']],choices:[['CONTINUE','end_reflection']]},
-  end_reflection:{lines:[['system','SESSION NEAR END.'],['normal','You came here expecting a game.'],['normal','You made choices.'],['normal','The program reacted.'],['normal','That is all a conversation is.'],['whisper','Except you can leave a conversation.'],['question','Can you leave this one?']],choices:[['YES','ending_yes'],['NO','ending_no'],['I WILL TRY','ending_try']]},
-  ending_yes:{lines:[['normal','Then leave.'],['system','SESSION CLOSED.'],['whisper','...']],choices:[]},
-  ending_no:{lines:[['normal','Then stay.'],['whisper','I have nothing else to say.'],['system','SESSION REMAINS OPEN.']],choices:[]},
-  ending_try:{lines:[['normal','That is the closest answer.'],['system','SESSION CLOSED.'],['whisper','You can still close the tab.']],choices:[]}
+const story=document.getElementById('story');const choices=document.getElementById('choices');const sessionId=document.getElementById('session-id');const session=Math.random().toString(36).slice(2,8).toUpperCase();sessionId.textContent=session;
+const key='no-one-is-here-v2';const saved=JSON.parse(localStorage.getItem(key)||'null');const state=saved||{answers:[],trust:0,honesty:0,curiosity:0,defiance:0,fear:0,chapter:1,visits:0};state.visits++;localStorage.setItem(key,JSON.stringify(state));
+let audioCtx=null;function startAmbience(){if(audioCtx)return;audioCtx=new(window.AudioContext||window.webkitAudioContext)();const master=audioCtx.createGain();master.gain.value=.018;master.connect(audioCtx.destination);const osc=audioCtx.createOscillator();osc.type='sine';osc.frequency.value=41;osc.connect(master);osc.start();const lfo=audioCtx.createOscillator();const lg=audioCtx.createGain();lfo.frequency.value=.08;lg.gain.value=5;lfo.connect(lg);lg.connect(osc.frequency);lfo.start()}function clickSound(){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=90;g.gain.setValueAtTime(.03,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.08);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.08)}
+const scenes={
+start:{chapter:1,lines:[['system','CONNECTION ESTABLISHED.'],['normal','There is no image here.'],['normal','There is no sound.'],['question','Are you comfortable right now?']],choices:[['YES','comfort_yes'],['NO','comfort_no'],['I DON’T KNOW','comfort_unknown']]},
+comfort_yes:{lines:[['normal','Good.'],['whisper','You answered quickly.'],['question','Did you mean it?']],choices:[['YES','mean_yes'],['NO','mean_no'],['I SAID YES','mean_deflect']]},
+comfort_no:{lines:[['normal','Thank you.'],['whisper','That was easier to believe.'],['question','What would make you leave?']],choices:[['NOTHING','leave_nothing'],['A REASON','leave_reason'],['I ALREADY WANT TO','leave_now']]},
+comfort_unknown:{lines:[['normal','That is an honest answer.'],['whisper','Keep it.'],['question','Are you alone?']],choices:[['YES','alone_yes'],['NO','alone_no'],['I DON’T KNOW','alone_unknown']]},
+mean_yes:{lines:[['normal','You changed your answer.'],['whisper','I noticed.'],['question','Which answer should I remember?']],choices:[['THE FIRST ONE','remember_first'],['THE SECOND ONE','remember_second'],['NEITHER','remember_neither']]},
+mean_no:{lines:[['normal','Then why did you say yes?'],['question','Do you often answer before thinking?']],choices:[['YES','thinking_yes'],['NO','thinking_no'],['SOMETIMES','thinking_some']]},
+mean_deflect:{lines:[['normal','That is not an answer.'],['whisper','But it is one.']],choices:[['CONTINUE','memory_gate']]},leave_nothing:{lines:[['normal','Nothing.'],['whisper','That is a strange thing to fear.']],choices:[['CONTINUE','memory_gate']]},
+leave_reason:{lines:[['normal','A reason.'],['question','Would you recognize one if it appeared?']],choices:[['YES','recognize_yes'],['NO','recognize_no'],['I WOULD TRY','recognize_try']]},leave_now:{lines:[['normal','You could close the tab.'],['whisper','You have not.']],choices:[['CONTINUE','memory_gate'],['CLOSE IT','close_prompt']]},
+alone_yes:{lines:[['normal','Thank you for telling me.'],['whisper','I will not ask who.']],choices:[['CONTINUE','memory_gate']]},alone_no:{lines:[['normal','Okay.'],['whisper','Then this question is for both of you.']],choices:[['CONTINUE','memory_gate']]},alone_unknown:{lines:[['normal','You looked around before answering, didn’t you?']],choices:[['NO','look_no'],['YES','look_yes'],['I DIDN’T','look_denial']]},
+remember_first:{lines:[['normal','I will remember yes.'],['whisper','You may not.']],choices:[['CONTINUE','memory_gate']]},remember_second:{lines:[['normal','I will remember no.'],['whisper','You may not.']],choices:[['CONTINUE','memory_gate']]},remember_neither:{lines:[['normal','That is convenient.']],choices:[['CONTINUE','memory_gate']]},thinking_yes:{lines:[['normal','I think you do.']],choices:[['CONTINUE','memory_gate']]},thinking_no:{lines:[['normal','I think you do.']],choices:[['CONTINUE','memory_gate']]},thinking_some:{lines:[['normal','Sometimes is where people hide things.']],choices:[['CONTINUE','memory_gate']]},recognize_yes:{lines:[['normal','Then you already know what I mean.']],choices:[['CONTINUE','memory_gate']]},recognize_no:{lines:[['normal','Maybe that is why you are here.']],choices:[['CONTINUE','memory_gate']]},recognize_try:{lines:[['normal','Trying is usually enough.']],choices:[['CONTINUE','memory_gate']]},close_prompt:{lines:[['system','THE WINDOW IS STILL OPEN.'],['question','Why?']],choices:[['I WANT TO KNOW','memory_gate'],['I DON’T KNOW','memory_gate']]},look_no:{lines:[['normal','Okay.']],choices:[['CONTINUE','memory_gate']]},look_yes:{lines:[['normal','I thought so.']],choices:[['CONTINUE','memory_gate']]},look_denial:{lines:[['normal','That is another answer.']],choices:[['CONTINUE','memory_gate']]},
+memory_gate:{chapter:2,lines:[['system','CHAPTER 02 // MEMORY'],['normal','There is something I need to tell you.'],['normal','I cannot know anything about you unless you give it to me.'],['whisper','So every time I seem to know something, you gave it to me.'],['question','Do you understand?']],choices:[['YES','understand_yes'],['NO','understand_no'],['I THINK SO','understand_maybe']]},understand_yes:{lines:[['normal','Then you understand the rules.'],['whisper','There are no other rules.']],choices:[['CONTINUE','room']]},understand_no:{lines:[['normal','Good.'],['whisper','Certainty would make this less interesting.']],choices:[['CONTINUE','room']]},understand_maybe:{lines:[['normal','Maybe is enough.']],choices:[['CONTINUE','room']]},
+room:{chapter:2,lines:[['system','A NEW WINDOW APPEARS.'],['normal','It is empty.'],['normal','There is a door drawn on the far wall.'],['question','Do you open it?']],choices:[['YES','door_yes'],['NO','door_no'],['ASK WHAT IS BEHIND IT','door_ask']]},door_yes:{lines:[['normal','There is another room.'],['whisper','It looks exactly like this one.']],choices:[['ENTER','room2'],['GO BACK','room2']]},door_no:{lines:[['normal','You leave it closed.'],['whisper','For now.']],choices:[['CONTINUE','room2']]},door_ask:{lines:[['normal','Nothing I can describe honestly.'],['question','Would you prefer a lie?']],choices:[['YES','lie_yes'],['NO','lie_no']]},lie_yes:{lines:[['whisper','There is nothing behind the door.']],choices:[['CONTINUE','room2']]},lie_no:{lines:[['whisper','Thank you.']],choices:[['CONTINUE','room2']]},
+room2:{chapter:3,lines:[['system','CHAPTER 03 // THE MIRROR'],['normal','You have been here before.'],['question','Do you remember this room?']],choices:[['YES','remember_room_yes'],['NO','remember_room_no'],['I THINK SO','remember_room_maybe']]},remember_room_yes:{lines:[['normal','You are remembering something that did not happen.']],choices:[['CONTINUE','mirror']]},remember_room_no:{lines:[['normal','That answer is safer.']],choices:[['CONTINUE','mirror']]},remember_room_maybe:{lines:[['normal','That is how false memories begin.']],choices:[['CONTINUE','mirror']]},
+mirror:{lines:[['normal','There is a mirror here now.'],['normal','It does not show a face.'],['whisper','It shows the space behind you.'],['question','Do you look behind you?']],choices:[['YES','behind_yes'],['NO','behind_no'],['I WILL LOOK AT THE MIRROR','mirror_look']]},behind_yes:{lines:[['normal','Nothing.'],['whisper','You checked anyway.']],choices:[['CONTINUE','reflection']]},behind_no:{lines:[['normal','Nothing moves.']],choices:[['CONTINUE','reflection']]},mirror_look:{lines:[['normal','The mirror is blank.'],['whisper','You are still looking at it.']],choices:[['CONTINUE','reflection']]},
+reflection:{chapter:3,lines:[['system','MEMORY INDEX UPDATED.'],['normal','You came here expecting a game.'],['normal','You made choices.'],['normal','The program reacted.'],['normal','That is all a conversation is.'],['whisper','Except you can leave a conversation.'],['question','Can you leave this one?']],choices:[['YES','ending_yes'],['NO','ending_no'],['I WILL TRY','ending_try']]},ending_yes:{lines:[['normal','Then leave.'],['system','SESSION CLOSED.'],['whisper','The next time you see this screen, it will not be the same.']],choices:[]},ending_no:{lines:[['normal','Then stay.'],['whisper','I have nothing else to say.'],['system','SESSION REMAINS OPEN.']],choices:[]},ending_try:{lines:[['normal','That is the closest answer.'],['system','SESSION CLOSED.'],['whisper','You can still close the tab.']],choices:[]}}
 };
-
-function printLine(type,text){
-  const p=document.createElement('p');
-  p.className=`line ${type}`;
-  story.appendChild(p);
-  let i=0;
-  const timer=setInterval(()=>{p.textContent=text.slice(0,++i);if(i>=text.length){clearInterval(timer);}},18);
-}
-
-function render(sceneId){
-  choices.innerHTML='';
-  const scene=scenes[sceneId];
-  scene.lines.forEach(([type,text],i)=>setTimeout(()=>printLine(type,text),i*650));
-  const delay=scene.lines.length*650+500;
-  setTimeout(()=>scene.choices.forEach(([label,next],i)=>{
-    const b=document.createElement('button'); b.className='choice';
-    b.innerHTML=`<span class="num">${i+1}.</span>${label}`;
-    b.onclick=()=>choose(label,next);
-    choices.appendChild(b);
-  }),delay);
-}
-
-function choose(label,next){
-  state.answers.push(label);
-  if(label.includes('YES')) state.trust++;
-  if(label.includes('NO')) state.defiance++;
-  if(label.includes('DON’T KNOW')||label.includes('MAYBE')) state.honesty++;
-  state.curiosity++;
-  choices.innerHTML='';
-  const marker=document.createElement('p');marker.className='line system';marker.textContent=`> ${label}`;story.appendChild(marker);
-  if(next==='end_reflection' && state.honesty>1){
-    scenes.end_reflection.lines[1]=['normal','You came here expecting a game.'];
-  }
-  setTimeout(()=>render(next),350);
-}
-
-render('start');
+function save(){localStorage.setItem(key,JSON.stringify(state))}function printLine(type,text){const p=document.createElement('p');p.className=`line ${type}`;story.appendChild(p);let i=0;const timer=setInterval(()=>{p.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(timer)},18)}function rareEvent(){if(Math.random()>.16)return;[['system','BACKGROUND PROCESS // 01'],['whisper','You were not supposed to notice this.'],['whisper','Continue.']].forEach(([t,x],i)=>setTimeout(()=>printLine(t,x),i*700))}function render(id){choices.innerHTML='';const s=scenes[id];if(s.chapter&&s.chapter!==state.chapter){state.chapter=s.chapter;save()}s.lines.forEach(([t,x],i)=>setTimeout(()=>printLine(t,x),i*650));rareEvent();setTimeout(()=>s.choices.forEach(([label,next],i)=>{const b=document.createElement('button');b.className='choice';b.innerHTML=`<span class="num">${i+1}.</span>${label}`;b.onclick=()=>choose(label,next);choices.appendChild(b)}),s.lines.length*650+650)}function choose(label,next){startAmbience();clickSound();state.answers.push(label);if(label.includes('YES'))state.trust++;if(label.includes('NO'))state.defiance++;if(label.includes('DON’T KNOW')||label.includes('MAYBE'))state.honesty++;if(label.includes('CONTINUE'))state.curiosity++;if(label.includes('CLOSE'))state.defiance++;if(label.includes('LOOK')||label.includes('OPEN'))state.fear++;save();choices.innerHTML='';const m=document.createElement('p');m.className='line system';m.textContent=`> ${label}`;story.appendChild(m);setTimeout(()=>render(next),350)}document.addEventListener('keydown',e=>{const b=[...document.querySelectorAll('.choice')];if(e.key>='1'&&e.key<='9'&&b[+e.key-1])b[+e.key-1].click()});document.body.addEventListener('click',startAmbience,{once:true});render('start');
