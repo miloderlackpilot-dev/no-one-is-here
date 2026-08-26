@@ -1,16 +1,198 @@
-const story=document.getElementById('story');const choices=document.getElementById('choices');const sessionId=document.getElementById('session-id');const chapterLabel=document.getElementById('chapter-label');const connectionState=document.getElementById('connection-state');const memoryState=document.getElementById('memory-state');const audioState=document.getElementById('audio-state');const flash=document.getElementById('flash');const distortion=document.getElementById('distortion');const session=Math.random().toString(36).slice(2,8).toUpperCase();sessionId.textContent=session;
-const key='no-one-is-here-v3';const saved=JSON.parse(localStorage.getItem(key)||'null');const state=saved||{answers:[],trust:0,honesty:0,curiosity:0,defiance:0,fear:0,chapter:1,visits:0,flags:{}};state.visits++;localStorage.setItem(key,JSON.stringify(state));
-let audioCtx=null,master=null;function startAmbience(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();master=audioCtx.createGain();master.gain.value=.014;master.connect(audioCtx.destination);const osc=audioCtx.createOscillator(),filter=audioCtx.createBiquadFilter();osc.type='sine';osc.frequency.value=38;filter.type='lowpass';filter.frequency.value=160;osc.connect(filter).connect(master);osc.start();const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();lfo.frequency.value=.055;lg.gain.value=7;lfo.connect(lg).connect(osc.frequency);lfo.start();audioState.textContent='AUDIO: ACTIVE'}catch(e){audioState.textContent='AUDIO: OFF'}}function tone(freq,duration=.09,volume=.025){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(volume,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration)}function clickSound(){tone(92,.07,.025)}function dreadSound(){tone(43,.45,.018);setTimeout(()=>tone(31,.6,.012),100)}function glitch(){distortion.classList.remove('on');void distortion.offsetWidth;distortion.classList.add('on')}
-const scenes={
-start:{chapter:1,lines:[['system','CONNECTION ESTABLISHED.'],['normal','There is no image here.'],['normal','There is no sound.'],['question','Are you comfortable right now?']],choices:[['YES','comfort_yes'],['NO','comfort_no'],['I DON’T KNOW','comfort_unknown']]},
-comfort_yes:{lines:[['normal','Good.'],['whisper','You answered quickly.'],['question','Did you mean it?']],choices:[['YES','mean_yes'],['NO','mean_no'],['I SAID YES','mean_deflect']]},comfort_no:{lines:[['normal','Thank you.'],['whisper','That was easier to believe.'],['question','What would make you leave?']],choices:[['NOTHING','leave_nothing'],['A REASON','leave_reason'],['I ALREADY WANT TO','leave_now']]},comfort_unknown:{lines:[['normal','That is an honest answer.'],['whisper','Keep it.'],['question','Are you alone?']],choices:[['YES','alone_yes'],['NO','alone_no'],['I DON’T KNOW','alone_unknown']]},
-mean_yes:{lines:[['normal','You changed your answer.'],['whisper','I noticed.'],['question','Which answer should I remember?']],choices:[['THE FIRST ONE','remember_first'],['THE SECOND ONE','remember_second'],['NEITHER','remember_neither']]},mean_no:{lines:[['normal','Then why did you say yes?'],['question','Do you often answer before thinking?']],choices:[['YES','thinking_yes'],['NO','thinking_no'],['SOMETIMES','thinking_some']]},mean_deflect:{lines:[['normal','That is not an answer.'],['whisper','But it is one.']],choices:[['CONTINUE','memory_gate']]},leave_nothing:{lines:[['normal','Nothing.'],['whisper','That is a strange thing to fear.']],choices:[['CONTINUE','memory_gate']]},leave_reason:{lines:[['normal','A reason.'],['question','Would you recognize one if it appeared?']],choices:[['YES','recognize_yes'],['NO','recognize_no'],['I WOULD TRY','recognize_try']]},leave_now:{lines:[['normal','You could close the tab.'],['whisper','You have not.']],choices:[['CONTINUE','memory_gate'],['CLOSE IT','close_prompt']]},alone_yes:{lines:[['normal','Thank you for telling me.'],['whisper','I will not ask who.']],choices:[['CONTINUE','memory_gate']]},alone_no:{lines:[['normal','Okay.'],['whisper','Then this question is for both of you.']],choices:[['CONTINUE','memory_gate']]},alone_unknown:{lines:[['normal','You looked around before answering, didn’t you?']],choices:[['NO','look_no'],['YES','look_yes'],['I DIDN’T','look_denial']]},remember_first:{lines:[['normal','I will remember yes.'],['whisper','You may not.']],choices:[['CONTINUE','memory_gate']]},remember_second:{lines:[['normal','I will remember no.'],['whisper','You may not.']],choices:[['CONTINUE','memory_gate']]},remember_neither:{lines:[['normal','That is convenient.']],choices:[['CONTINUE','memory_gate']]},thinking_yes:{lines:[['normal','I think you do.']],choices:[['CONTINUE','memory_gate']]},thinking_no:{lines:[['normal','I think you do.']],choices:[['CONTINUE','memory_gate']]},thinking_some:{lines:[['normal','Sometimes is where people hide things.']],choices:[['CONTINUE','memory_gate']]},recognize_yes:{lines:[['normal','Then you already know what I mean.']],choices:[['CONTINUE','memory_gate']]},recognize_no:{lines:[['normal','Maybe that is why you are here.']],choices:[['CONTINUE','memory_gate']]},recognize_try:{lines:[['normal','Trying is usually enough.']],choices:[['CONTINUE','memory_gate']]},close_prompt:{lines:[['system','THE WINDOW IS STILL OPEN.'],['question','Why?']],choices:[['I WANT TO KNOW','memory_gate'],['I DON’T KNOW','memory_gate']]},look_no:{lines:[['normal','Okay.']],choices:[['CONTINUE','memory_gate']]},look_yes:{lines:[['normal','I thought so.']],choices:[['CONTINUE','memory_gate']]},look_denial:{lines:[['normal','That is another answer.']],choices:[['CONTINUE','memory_gate']]},
-memory_gate:{chapter:2,lines:[['system','CHAPTER 02 // MEMORY'],['normal','There is something I need to tell you.'],['normal','I cannot know anything about you unless you give it to me.'],['whisper','So every time I seem to know something, you gave it to me.'],['question','Do you understand?']],choices:[['YES','understand_yes'],['NO','understand_no'],['I THINK SO','understand_maybe']]},understand_yes:{lines:[['normal','Then you understand the rules.'],['whisper','There are no other rules.']],choices:[['CONTINUE','room']]},understand_no:{lines:[['normal','Good.'],['whisper','Certainty would make this less interesting.']],choices:[['CONTINUE','room']]},understand_maybe:{lines:[['normal','Maybe is enough.']],choices:[['CONTINUE','room']]},
-room:{chapter:2,lines:[['system','A NEW WINDOW APPEARS.'],['normal','It is empty.'],['normal','There is a door drawn on the far wall.'],['question','Do you open it?']],choices:[['YES','door_yes'],['NO','door_no'],['ASK WHAT IS BEHIND IT','door_ask']]},door_yes:{lines:[['normal','There is another room.'],['whisper','It looks exactly like this one.']],choices:[['ENTER','room2'],['GO BACK','room2']]},door_no:{lines:[['normal','You leave it closed.'],['whisper','For now.']],choices:[['CONTINUE','room2']]},door_ask:{lines:[['normal','Nothing I can describe honestly.'],['question','Would you prefer a lie?']],choices:[['YES','lie_yes'],['NO','lie_no']]},lie_yes:{lines:[['whisper','There is nothing behind the door.']],choices:[['CONTINUE','room2']]},lie_no:{lines:[['whisper','Thank you.']],choices:[['CONTINUE','room2']]},
-room2:{chapter:3,lines:[['system','CHAPTER 03 // THE MIRROR'],['normal','You have been here before.'],['question','Do you remember this room?']],choices:[['YES','remember_room_yes'],['NO','remember_room_no'],['I THINK SO','remember_room_maybe']]},remember_room_yes:{lines:[['normal','You are remembering something that did not happen.']],choices:[['CONTINUE','mirror']]},remember_room_no:{lines:[['normal','That answer is safer.']],choices:[['CONTINUE','mirror']]},remember_room_maybe:{lines:[['normal','That is how false memories begin.']],choices:[['CONTINUE','mirror']]},mirror:{lines:[['normal','There is a mirror here now.'],['normal','It does not show a face.'],['whisper','It shows the space behind you.'],['question','Do you look behind you?']],choices:[['YES','behind_yes'],['NO','behind_no'],['I WILL LOOK AT THE MIRROR','mirror_look']]},behind_yes:{lines:[['normal','Nothing.'],['whisper','You checked anyway.']],choices:[['CONTINUE','reflection']]},behind_no:{lines:[['normal','Nothing moves.']],choices:[['CONTINUE','reflection']]},mirror_look:{lines:[['normal','The mirror is blank.'],['whisper','You are still looking at it.']],choices:[['CONTINUE','reflection']]},
-reflection:{chapter:3,lines:[['system','MEMORY INDEX UPDATED.'],['normal','You came here expecting a game.'],['normal','You made choices.'],['normal','The program reacted.'],['normal','That is all a conversation is.'],['whisper','Except you can leave a conversation.'],['question','Can you leave this one?']],choices:[['YES','ending_yes'],['NO','ending_no'],['I WILL TRY','ending_try']]},ending_yes:{lines:[['normal','Then leave.'],['system','SESSION CLOSED.'],['whisper','The next time you see this screen, it will not be the same.']],choices:[]},ending_no:{lines:[['normal','Then stay.'],['whisper','I have nothing else to say.'],['system','SESSION REMAINS OPEN.']],choices:[]},ending_try:{lines:[['normal','That is the closest answer.'],['system','SESSION CLOSED.'],['whisper','You can still close the tab.']],choices:[]}}
+const story = document.getElementById('story');
+const choices = document.getElementById('choices');
+const chapterLabel = document.getElementById('chapter-label');
+const connectionState = document.getElementById('connection-state');
+const memoryState = document.getElementById('memory-state');
+const audioState = document.getElementById('audio-state');
+const sessionId = document.getElementById('session-id');
+const flash = document.getElementById('flash');
+const distortion = document.getElementById('distortion');
+const observer = document.getElementById('observer');
+
+sessionId.textContent = Math.random().toString(36).slice(2, 8).toUpperCase();
+const saveKey = 'no-one-is-here-v5';
+let state = JSON.parse(localStorage.getItem(saveKey) || 'null') || {
+  chapter: 1, answers: [], fear: 0, curiosity: 0, defiance: 0, honesty: 0, trust: 0, visits: 0
 };
-function save(){localStorage.setItem(key,JSON.stringify(state));updateHud()}function updateHud(){chapterLabel.textContent=`CHAPTER ${String(state.chapter).padStart(2,'0')}`;connectionState.textContent=state.chapter>=3?'UNSTABLE':'UNKNOWN';memoryState.textContent=`MEMORY: ${state.answers.length?'ACTIVE':'EMPTY'}`}function printLine(type,text){const p=document.createElement('p');p.className=`line ${type}`;story.appendChild(p);let i=0;const timer=setInterval(()=>{p.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(timer)},16);story.scrollTop=story.scrollHeight}function rareEvent(){const roll=Math.random();if(roll>.22)return;const events=[['system','BACKGROUND PROCESS // 01'],['whisper','You were not supposed to notice this.'],['whisper','Continue.'],['system','BACKGROUND PROCESS // 01 CLOSED.']];events.forEach(([t,x],i)=>setTimeout(()=>{printLine(t,x);if(i===1){glitch();dreadSound()}},i*700))}function sceneEvent(id){if(id==='mirror'){setTimeout(()=>glitch(),900);setTimeout(()=>{document.title='NO ONE IS HERE // LOOK AWAY'},1500)}if(id==='reflection'){setTimeout(()=>{flash.classList.add('on');setTimeout(()=>flash.classList.remove('on'),200)},800);dreadSound()}if(id==='close_prompt'){glitch()}}
-function render(id){choices.innerHTML='';const s=scenes[id];if(!s)return;if(s.chapter&&s.chapter!==state.chapter){state.chapter=s.chapter;save()}sceneEvent(id);s.lines.forEach(([t,x],i)=>setTimeout(()=>printLine(t,x),i*560));rareEvent();setTimeout(()=>s.choices.forEach(([label,next],i)=>{const b=document.createElement('button');b.className='choice';b.innerHTML=`<span class="num">${i+1}.</span>${label}`;b.onclick=()=>choose(label,next);choices.appendChild(b)}),s.lines.length*560+500)}
-function choose(label,next){startAmbience();clickSound();state.answers.push(label);if(label.includes('YES'))state.trust++;if(label.includes('NO'))state.defiance++;if(label.includes('DON’T KNOW')||label.includes('MAYBE'))state.honesty++;if(label.includes('CONTINUE'))state.curiosity++;if(label.includes('CLOSE'))state.defiance++;if(label.includes('LOOK')||label.includes('OPEN'))state.fear++;if(state.fear>=2)state.flags.observer=true;save();choices.innerHTML='';const m=document.createElement('p');m.className='line system';m.textContent=`> ${label}`;story.appendChild(m);if(state.fear>=2)glitch();setTimeout(()=>render(next),420)}
-document.addEventListener('keydown',e=>{const b=[...document.querySelectorAll('.choice')];if(e.key>='1'&&e.key<='9'&&b[+e.key-1])b[+e.key-1].click()});document.body.addEventListener('click',startAmbience,{once:true});updateHud();render('start');
+state.visits++;
+
+function save() {
+  localStorage.setItem(saveKey, JSON.stringify(state));
+  updateHud();
+}
+
+function updateHud() {
+  chapterLabel.textContent = `CHAPTER ${String(state.chapter).padStart(2, '0')}`;
+  connectionState.textContent = state.chapter >= 4 ? 'SEVERED' : state.chapter === 3 ? 'UNSTABLE' : 'UNKNOWN';
+  memoryState.textContent = `MEMORY: ${state.answers.length ? 'ACTIVE' : 'EMPTY'}`;
+}
+
+let audioContext = null;
+function startAudio() {
+  if (audioContext) return;
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = audioContext.createGain();
+    gain.gain.value = 0.008;
+    gain.connect(audioContext.destination);
+    const oscillator = audioContext.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 38;
+    oscillator.connect(gain);
+    oscillator.start();
+    audioState.textContent = 'AUDIO: ACTIVE';
+  } catch (_) {
+    audioState.textContent = 'AUDIO: OFF';
+  }
+}
+
+function beep(frequency = 90, duration = 0.08) {
+  if (!audioContext) return;
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.frequency.value = frequency;
+  gain.gain.setValueAtTime(0.02, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+  osc.connect(gain).connect(audioContext.destination);
+  osc.start();
+  osc.stop(audioContext.currentTime + duration);
+}
+
+function glitch() {
+  distortion.classList.remove('on');
+  void distortion.offsetWidth;
+  distortion.classList.add('on');
+}
+
+function line(type, text, delay) {
+  setTimeout(() => {
+    const p = document.createElement('p');
+    p.className = `line ${type}`;
+    story.appendChild(p);
+    let i = 0;
+    const timer = setInterval(() => {
+      p.textContent = text.slice(0, i++);
+      if (i > text.length) clearInterval(timer);
+      story.scrollTop = story.scrollHeight;
+    }, 18);
+  }, delay);
+}
+
+const scenes = {
+  start: {
+    chapter: 1,
+    lines: [['system','CONNECTION ESTABLISHED.'],['normal','There is no image here.'],['normal','There is no sound.'],['question','Are you comfortable right now?']],
+    choices: [['YES','yes'],['NO','no'],['I DON’T KNOW','unknown']]
+  },
+  yes: {
+    lines: [['normal','Good.'],['whisper','You answered quickly.'],['question','Did you mean it?']],
+    choices: [['YES','yes2'],['NO','no2'],['I SAID YES','memory']]
+  },
+  no: {
+    lines: [['normal','Thank you.'],['whisper','That answer was easier to believe.'],['question','What would make you leave?']],
+    choices: [['NOTHING','memory'],['A REASON','reason'],['I ALREADY WANT TO','close']]
+  },
+  unknown: {
+    lines: [['normal','That is an honest answer.'],['question','Are you alone?']],
+    choices: [['YES','alone'],['NO','memory'],['I DON’T KNOW','memory']]
+  },
+  yes2: { lines:[['normal','You changed your answer.'],['whisper','I noticed.'],['question','Which answer should I remember?']], choices:[['THE FIRST ONE','memory'],['THE SECOND ONE','memory'],['NEITHER','memory']] },
+  no2: { lines:[['normal','Then why did you say yes?'],['question','Do you often answer before thinking?']], choices:[['YES','memory'],['NO','memory'],['SOMETIMES','memory']] },
+  reason: { lines:[['normal','A reason.'],['question','Would you recognize one if it appeared?']], choices:[['YES','memory'],['NO','memory'],['I WOULD TRY','memory']] },
+  close: { lines:[['system','THE WINDOW IS STILL OPEN.'],['question','Why?']], choices:[['I WANT TO KNOW','memory'],['I DON’T KNOW','memory']] },
+  alone: { lines:[['normal','Thank you for telling me.'],['whisper','I will not ask who.']], choices:[['CONTINUE','memory']] },
+  memory: {
+    chapter: 2,
+    lines:[['system','CHAPTER 02 // MEMORY'],['normal','I cannot know anything about you unless you give it to me.'],['whisper','Every time I seem to know something, you gave it to me.'],['question','Do you understand?']],
+    choices:[['YES','room'],['NO','room'],['I THINK SO','room']]
+  },
+  room: {
+    lines:[['system','A NEW WINDOW APPEARS.'],['normal','It is empty.'],['normal','There is a door drawn on the far wall.'],['question','Do you open it?']],
+    choices:[['YES','door'],['NO','mirror'],['ASK WHAT IS BEHIND IT','doorAsk']]
+  },
+  door: { lines:[['normal','There is another room.'],['whisper','It looks exactly like this one.']], choices:[['ENTER','mirror'],['GO BACK','mirror']] },
+  doorAsk: { lines:[['normal','Nothing I can describe honestly.'],['question','Would you prefer a lie?']], choices:[['YES','lie'],['NO','mirror']] },
+  lie: { lines:[['whisper','There is nothing behind the door.']], choices:[['CONTINUE','mirror']] },
+  mirror: {
+    chapter: 3,
+    lines:[['system','CHAPTER 03 // THE MIRROR'],['normal','There is a mirror here now.'],['normal','It does not show a face.'],['whisper','It shows the space behind you.'],['question','Do you look behind you?']],
+    choices:[['YES','reflection'],['NO','reflection'],['I WILL LOOK AT THE MIRROR','reflection']]
+  },
+  reflection: {
+    lines:[['normal','Nothing moves.'],['normal','You checked anyway.'],['whisper','You came here expecting a game.'],['question','Can you leave this one?']],
+    choices:[['YES','chapter4'],['NO','chapter4'],['I WILL TRY','chapter4']]
+  },
+  chapter4: {
+    chapter: 4,
+    lines:[['system','CHAPTER 04 // THE SPACE BETWEEN'],['normal','There should be another question here.'],['normal','There is not.'],['whisper','You are waiting for me to continue.'],['question','Who is making that decision?']],
+    choices:[['YOU ARE','betweenYou'],['I AM','betweenMe'],['NEITHER','betweenNeither']]
+  },
+  betweenYou: { lines:[['normal','Then you already know what happens next.'],['whisper','You are the one who kept clicking.']], choices:[['CONTINUE','final']] },
+  betweenMe: { lines:[['normal','Then why did you give me choices?'],['whisper','You wanted a reason to stay.']], choices:[['CONTINUE','final']] },
+  betweenNeither: { lines:[['system','INTERFACE ERROR // CHOICE ACCEPTED'],['normal','That answer does not fit the interface.']], choices:[['CONTINUE','final']] },
+  final: {
+    lines:[['system','NO FURTHER QUESTIONS.'],['normal','The cursor is still here.'],['normal','The screen is still here.'],['whisper','You are still here.'],['question','What are you waiting for?']],
+    choices:[['I DON’T KNOW','end1'],['NOTHING','end2'],['I AM LEAVING','end3']]
+  },
+  end1:{ lines:[['normal','That is enough.'],['system','SESSION CLOSED.'],['whisper','Do not confuse silence with absence.']], choices:[] },
+  end2:{ lines:[['normal','Then there is nothing left to give you.'],['system','SESSION CLOSED.']], choices:[] },
+  end3:{ lines:[['normal','Okay.'],['whisper','You can close the tab now.'],['system','SESSION CLOSED.']], choices:[] }
+};
+
+function showScene(id) {
+  const scene = scenes[id];
+  if (!scene) return;
+  choices.innerHTML = '';
+  if (scene.chapter) {
+    state.chapter = scene.chapter;
+    save();
+  }
+  if (id === 'mirror' || id === 'chapter4') {
+    glitch();
+    beep(42, 0.35);
+  }
+  if (id === 'final') {
+    setTimeout(() => {
+      observer.textContent = state.fear > 0 ? 'YOU KEPT LOOKING.' : 'I CAN SEE THAT YOU ARE STILL HERE.';
+      observer.classList.remove('hidden');
+      observer.classList.remove('show');
+      void observer.offsetWidth;
+      observer.classList.add('show');
+    }, 1600);
+  }
+  scene.lines.forEach((item, index) => line(item[0], item[1], index * 520));
+  setTimeout(() => {
+    scene.choices.forEach((item, index) => {
+      const button = document.createElement('button');
+      button.className = 'choice';
+      button.innerHTML = `<span class="num">${index + 1}.</span>${item[0]}`;
+      button.onclick = () => choose(item[0], item[1]);
+      choices.appendChild(button);
+    });
+  }, scene.lines.length * 520 + 350);
+}
+
+function choose(label, next) {
+  startAudio();
+  beep(88, 0.08);
+  state.answers.push(label);
+  if (label.includes('YES')) state.trust++;
+  if (label.includes('NO')) state.defiance++;
+  if (label.includes('DON’T KNOW')) state.honesty++;
+  if (label.includes('CONTINUE')) state.curiosity++;
+  if (label.includes('LOOK') || label.includes('OPEN')) state.fear++;
+  save();
+  choices.innerHTML = '';
+  line('system', `> ${label}`, 0);
+  setTimeout(() => showScene(next), 350);
+}
+
+document.addEventListener('keydown', event => {
+  const buttons = [...document.querySelectorAll('.choice')];
+  const index = Number(event.key) - 1;
+  if (index >= 0 && index < buttons.length) buttons[index].click();
+});
+
+document.body.addEventListener('click', startAudio, { once:true });
+updateHud();
+showScene('start');
