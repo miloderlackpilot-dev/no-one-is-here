@@ -3,19 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030303">
   <title>NO ONE IS HERE</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="app" aria-live="polite">
+    <div class="scanlines"></div>
     <div id="grain"></div>
+    <div class="vignette"></div>
+    <div id="flash" class="flash"></div>
+    <div id="distortion" class="distortion"></div>
     <section id="terminal" class="screen">
-      <div class="topline">CONNECTION // UNKNOWN</div>
+      <header class="topbar">
+        <div class="topline">CONNECTION // <span id="connection-state">UNKNOWN</span></div>
+        <div class="status"><span id="chapter-label">CHAPTER 01</span><span id="session-id"></span></div>
+      </header>
+      <div class="signal"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div id="story" class="story"></div>
       <div id="choices" class="choices"></div>
       <div id="input-area" class="input-area"></div>
-      <div class="footer">[ local session ] <span id="session-id"></span></div>
+      <footer class="footer"><span>[ local session ]</span><span id="memory-state">MEMORY: ACTIVE</span><span id="audio-state">AUDIO: READY</span></footer>
     </section>
+    <div class="corner corner-a"></div><div class="corner corner-b"></div>
   </main>
   <script src="game.js"></script>
 </body>
